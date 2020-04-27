@@ -1,0 +1,61 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql-account-db
+spec:
+  ports:
+  - port: 3306
+  selector:
+    deploymentconfig: mysql-account-db
+---
+kind: "DeploymentConfig"
+apiVersion: "v1"
+metadata:
+  name: "mysql-account-db"
+  namespace: development
+  labels:
+    app: mysql-account-db
+    app.kubernetes.io/component: mysql-account-db
+    app.kubernetes.io/instance: mysql-account-db
+spec:
+  template: 
+    metadata:
+      labels:
+        name: "mysql-account-db"
+    spec:
+      containers:
+        - name: "mysql-account-db"
+          image: "mysql-80-centos7:latest"
+          env:
+            - name: MYSQL_USER
+              value: root
+            - name: MYSQL_PASSWORD
+              value: dbadmin123
+            - name: MYSQL_DATABASE
+              value: accountdb
+          ports:
+            - containerPort: 3306
+              protocol: "TCP"
+          imagePullPolicy: Always
+          volumeMounts:
+            - name: mysql-account-pv
+              mountPath: /var/lib/mysql/data
+      volumes:
+        - name: mysql-account-pv
+      persistentVolumeClaim:
+        claimName: mysql-account-pvc
+  replicas: 1
+  selector:
+    name: "mysql-account-db"
+  triggers:
+    - type: "ConfigChange"
+    - type: "ImageChange"
+      imageChangeParams:
+        automatic: true
+        containerNames:
+          - "mysql-account-db"
+        from:
+          kind: "ImageStreamTag"
+          name: "mysql-80-centos7:latest"
+  strategy: 
+    type: "Rolling"

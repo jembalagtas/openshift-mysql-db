@@ -1,0 +1,61 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql-phone-db
+spec:
+  ports:
+  - port: 3306
+  selector:
+    deploymentconfig: mysql-phone-db
+---
+kind: "DeploymentConfig"
+apiVersion: "v1"
+metadata:
+  name: "mysql-phone-db"
+  namespace: development
+  labels:
+    app: mysql-phone-db
+    app.kubernetes.io/component: mysql-phone-db
+    app.kubernetes.io/instance: mysql-phone-db
+spec:
+  template: 
+    metadata:
+      labels:
+        name: "mysql-phone-db"
+    spec:
+      containers:
+        - name: "mysql-phone-db"
+          image: "mysql-56-centos7:latest"
+          env:
+            - name: MYSQL_DATABASE
+              value: phonedb
+            - name: MYSQL_PASSWORD
+              value: mypassword
+            - name: MYSQL_USER
+              value: root
+          ports:
+            - containerPort: 3306
+              protocol: "TCP"
+          imagePullPolicy: Always
+          volumeMounts:
+            - name: mysql-phone-pv
+              mountPath: /var/lib/mysql/data
+      volumes:
+        - name: mysql-phone-pv
+      persistentVolumeClaim:
+        claimName: mysql-phone-pvc
+  replicas: 1
+  selector:
+    name: "mysql-phone-db"
+  triggers:
+    - type: "ConfigChange"
+    - type: "ImageChange"
+      imageChangeParams:
+        automatic: true
+        containerNames:
+          - "mysql-phone-db"
+        from:
+          kind: "ImageStreamTag"
+          name: "mysql-56-centos7:latest"
+  strategy: 
+    type: "Rolling"

@@ -1,0 +1,61 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql-merchant-db
+spec:
+  ports:
+  - port: 3306
+  selector:
+    deploymentconfig: mysql-merchant-db
+---
+kind: "DeploymentConfig"
+apiVersion: "v1"
+metadata:
+  name: "mysql-merchant-db"
+  namespace: development
+  labels:
+    app: mysql-merchant-db
+    app.kubernetes.io/component: mysql-merchant-db
+    app.kubernetes.io/instance: mysql-merchant-db
+spec:
+  template: 
+    metadata:
+      labels:
+        name: "mysql-merchant-db"
+    spec:
+      containers:
+        - name: "mysql-merchant-db"
+          image: "mysql-56-centos7:latest"
+          env:
+            - name: MYSQL_DATABASE
+              value: merchdb
+            - name: MYSQL_PASSWORD
+              value: mypassword
+            - name: MYSQL_USER
+              value: root
+          ports:
+            - containerPort: 3306
+              protocol: "TCP"
+          imagePullPolicy: Always
+          volumeMounts:
+            - name: mysql-merchant-pv
+              mountPath: /var/lib/mysql/data
+      volumes:
+        - name: mysql-merchant-pv
+      persistentVolumeClaim:
+        claimName: mysql-merchant-pvc
+  replicas: 1
+  selector:
+    name: "mysql-merchant-db"
+  triggers:
+    - type: "ConfigChange"
+    - type: "ImageChange"
+      imageChangeParams:
+        automatic: true
+        containerNames:
+          - "mysql-merchant-db"
+        from:
+          kind: "ImageStreamTag"
+          name: "mysql-56-centos7:latest"
+  strategy: 
+    type: "Rolling"

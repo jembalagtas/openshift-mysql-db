@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mysql-phone-pvc
+  namespace: development
+  annotations:
+    volume.beta.kubernetes.io/storage-provisioner: openshift.org/aws-efs
+  finalizers:
+    - kubernetes.io/pvc-protection
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 15Gi
+  storageClassName: aws-efs
+  volumeMode: Filesystem
