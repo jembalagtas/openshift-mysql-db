@@ -25,14 +25,16 @@ spec:
     spec:
       containers:
         - name: "mysql-bank-db"
-          image: "mysql-56-centos7:latest"
+          image: "mysql:latest"
           env:
             - name: MYSQL_DATABASE
               value: bankdb
             - name: MYSQL_PASSWORD
               value: mypassword
             - name: MYSQL_USER
-              value: root
+              value: dbuser
+            - name: MYSQL_ROOT_PASSWORD
+              value: mypassword
           ports:
             - containerPort: 3306
               protocol: "TCP"
@@ -42,8 +44,8 @@ spec:
               mountPath: /var/lib/mysql/data
       volumes:
         - name: mysql-bank-pv
-      persistentVolumeClaim:
-        claimName: mysql-bank-pvc
+          persistentVolumeClaim:
+            claimName: mysql-bank-pvc
   replicas: 1
   selector:
     name: "mysql-bank-db"
@@ -55,7 +57,8 @@ spec:
         containerNames:
           - "mysql-bank-db"
         from:
-          kind: "ImageStreamTag"
-          name: "mysql-56-centos7:latest"
+          kind: ImageStreamTag
+          namespace: openshift
+          name: 'mysql:latest'
   strategy: 
     type: "Rolling"
